@@ -260,14 +260,12 @@
         {
             if (input == null)
                 return false;
-            return {{#vars}}{{#parent}}base.Equals(input) && {{/parent}}{{^isContainer}}
-                (
-                    Extension.Equals(this.{{name}}, input.{{name}})
-                ){{#hasMore}} && {{/hasMore}}{{/isContainer}}{{#isContainer}}
+            return base.Equals(input){{#vars}}{{#parent}} && {{/parent}}{{^isContainer}}
+                    Extension.Equals(this.{{name}}, input.{{name}}){{#hasMore}} && {{/hasMore}}{{/isContainer}}{{#isContainer}}
                 (
                     this.{{name}} == input.{{name}} ||
                     Extension.AllEquals(this.{{name}}, input.{{name}})
-                ){{#hasMore}} && {{/hasMore}}{{/isContainer}}{{/vars}}{{^vars}}{{#parent}}base.Equals(input){{/parent}}{{^parent}}false{{/parent}}{{/vars}};
+                ){{#hasMore}} && {{/hasMore}}{{/isContainer}}{{/vars}}{{^vars}}{{#parent}}{{/parent}}{{^parent}}false{{/parent}}{{/vars}};
         }
 
         /// <summary>

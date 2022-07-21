@@ -23,8 +23,8 @@ Qt/
 env/
 dist/
 __pycache__/
-docs/.generator/
-docs/docfx/
+docs/
+src/
 
 .openapi-docs/
 .openapi-generator/FILES

@@ -5,10 +5,14 @@ import json
 
 # root = os.path.dirname(os.path.dirname(__file__))
 # source_folder = os.path.join(root, 'src', lib_Name, 'Model')
+ROOT_DIR = os.getcwd()
+GENERATOR_DIR = os.path.join(ROOT_DIR, '.openapi-generator')
 
+print(ROOT_DIR)
+print(GENERATOR_DIR)
 
 def get_package_name():
-    config_file = os.path.join(os.getcwd(), '.openapi-generator', '.openapi-config.json')
+    config_file = os.path.join(ROOT_DIR, '.openapi-config.json')
     with open(config_file, "r") as jsonFile:
         config_data = json.load(jsonFile)
 
@@ -17,7 +21,7 @@ def get_package_name():
 
 
 def gen_interfaces(source_json):
-    root = os.path.dirname(os.path.dirname(__file__))
+    root = ROOT_DIR
     interface_dir = os.path.join(root, 'src', lib_Name, 'Interface')
 
     with open(source_json, "rb") as jsonFile:

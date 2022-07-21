@@ -6,8 +6,14 @@ import re
 import time
 
 
+ROOT_DIR = os.getcwd()
+GENERATOR_DIR = os.path.join(ROOT_DIR, '.openapi-generator')
+
+print(ROOT_DIR)
+print(GENERATOR_DIR)
+
 def get_package_name():
-    config_file = os.path.join(os.getcwd(), '.openapi-generator', '.openapi-config.json')
+    config_file = os.path.join(ROOT_DIR, '.openapi-config.json')
     with open(config_file, "r") as jsonFile:
         config_data = json.load(jsonFile)
 
@@ -302,7 +308,7 @@ def get_allof_types_from_json(source_json_url):
 def check_types(source_json_url, mapper_json):
     all_types = get_allof_types_from_json(source_json_url)
 
-    root = os.path.dirname(os.path.dirname(__file__))
+    root = ROOT_DIR
     source_folder = os.path.join(root, 'src', name_space, 'Model')
     check_csfiles(source_folder, all_types)
 
@@ -313,7 +319,7 @@ def check_types(source_json_url, mapper_json):
 
 
 def cleanup(projectName):
-    root = os.path.dirname(os.path.dirname(__file__))
+    root = ROOT_DIR
     # remove unused test folder
     target_folder = os.path.join(root, 'src', f'{projectName}.Test')
     if os.path.exists(target_folder):
@@ -322,6 +328,7 @@ def cleanup(projectName):
     target_folder = os.path.join(root, 'src', projectName, 'Client')
     if os.path.exists(target_folder):
         shutil.rmtree(target_folder)
+        
     # remove all *AllOf.cs files
     target_folder = os.path.join(root, 'src', projectName, 'Model')
     class_files = [x for x in os.listdir(target_folder) if x.endswith("AllOf.cs")]

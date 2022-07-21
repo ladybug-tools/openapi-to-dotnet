@@ -1,51 +1,44 @@
 ﻿using System.Diagnostics;
 
-
 internal class Program
 {
-    #region Environment setup
-    static bool isMac = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX);
-
-    static string generatorDirName = ".openapi-generator";
-
-    static string workingDir = Environment.CurrentDirectory;
-    static string docsDir => Path.Combine(workingDir, ".openapi-docs");
-    static string generatorDir => Path.Combine(workingDir, generatorDirName);
-    static string configFile => Path.Combine(workingDir, ".openapi-config.json");
-
-    static string templateDir => Path.Combine(generatorDir, "templates", "csharp");
-    //static string templateDir = Path.Combine(generatorDir, "templates/csharp");
-    #endregion
 
     static void Main(string[] args)
     {
-        workingDir = workingDir.Contains(generatorDirName) ? Directory.GetParent(workingDir).FullName : workingDir;
-        Environment.CurrentDirectory = workingDir;
+        Utility.workingDir = Utility.workingDir.Contains(Utility.generatorDirName) ? Directory.GetParent(Utility.workingDir).FullName : Utility.workingDir;
+        Environment.CurrentDirectory = Utility.workingDir;
 
 
-        Console.WriteLine($"Current working dir: {workingDir}");
+        Console.WriteLine($"Current working dir: {Utility.workingDir}");
         Console.WriteLine(string.Join(",", args));
 
         // Create OpenApi Config file 
-        //var configFile = @"D:\Dev\ladybug_tools\openapi-to-dotnet\.openapi-generator\.openapi-config.json";
-        //Config.ReplaceVersion(config, "0.0.2");
-        var config = Config.ReadFromFile(configFile);
-        config.PackageVersion = "0.0.2";
-        config.Save(configFile);
+        var config = Config.ReadFromFile(Utility.configFile);
+        config.PackageVersion = "0.0.2.0";
+        config.Save(Utility.configFile);
 
-        Console.WriteLine($"Working on {config.ProjectName} [{config.PackageVersion}]: {Path.Combine(workingDir, config.SourceFolder)}");
+        Console.WriteLine($"Working on {config.ProjectName} [{config.PackageVersion}]: {Path.Combine(Utility.workingDir, config.SourceFolder)}");
 
         //var projectName = config.ProjectName;
 
         // Clean 
-        CleanUp(workingDir, config);
+        CleanUp(Utility.workingDir, config);
 
         // Generate dotnet schema
         Generate(config);
 
+        //post process
+        PostProcess();
 
-        //var done = ExeCommand("python", @"D:\Dev\ladybug_tools\openapi-to-dotnet\.openapi-generator\scripts\test.py", out var res);
-        //Console.WriteLine(res);
+        // this is only for HoneybeeSchema
+        if (config.PackageName.ToLower() == "honeybeeschema")
+        {
+            UpdateGlobalDefault();
+        }
+
+        UpdateAssemblyVersion();
+        CreateInterfaces();
+
 
     }
 
@@ -76,12 +69,12 @@ internal class Program
 
     static void Generate(Config config)
     {
-        var schemaJsons = System.IO.Directory.GetFiles(docsDir, "*_inheritance.json");
-        //var src = Path.Combine(workingDir, config.SourceFolder);
+        var schemaJsons = System.IO.Directory.GetFiles(Utility.docsDir, "*_inheritance.json");
+        //var src = Path.Combine(Utility.workingDir, config.SourceFolder);
         foreach (var schemaJson in schemaJsons)
         {
             Console.WriteLine($"Translating: {schemaJson}");
-            var cmd = $"npx @openapitools/openapi-generator-cli generate -i {schemaJson} -t {templateDir} -g csharp -o . --skip-validate-spec -c {configFile}";
+            var cmd = $"npx @openapitools/openapi-generator-cli generate -i {schemaJson} -t {Utility.templateDir} -g csharp -o . --skip-validate-spec -c {Utility.configFile}";
             Console.WriteLine(cmd);
             //Process.Start($"cmd {cmd}");
             ExeCommand("cmd", cmd, out var msg);
@@ -89,6 +82,55 @@ internal class Program
         }
     }
 
+    static void PostProcess()
+    {
+        var schemaJsons = System.IO.Directory.GetFiles(Utility.docsDir, "*_inheritance.json");
+        var script = $"{Utility.scriptsDir}/post_gen_script.py";
+        foreach (var schemaJson in schemaJsons)
+        {
+            Console.WriteLine($"Translating: {schemaJson}");
+            var cmd = $"python {script} {schemaJson}";
+            Console.WriteLine(cmd);
+            //Process.Start($"cmd {cmd}");
+            ExeCommand("cmd", cmd, out var msg);
+        }
+
+    }
+
+    static void UpdateGlobalDefault()
+    {
+        var script = $"{Utility.scriptsDir}/create_global_default.py";
+        var cmd = $"python {script}";
+        Console.WriteLine(cmd);
+        //Process.Start($"cmd {cmd}");
+        ExeCommand("cmd", cmd, out var msg);
+
+    }
+
+    static void UpdateAssemblyVersion()
+    {
+        var script = $"{Utility.scriptsDir}/update_assembly_version.py";
+        var cmd = $"python {script}";
+        Console.WriteLine(cmd);
+        //Process.Start($"cmd {cmd}");
+        ExeCommand("cmd", cmd, out var msg);
+
+    }
+
+    static void CreateInterfaces()
+    {
+        var schemaJsons = System.IO.Directory.GetFiles(Utility.docsDir, "*_mapper.json");
+        var script = $"{Utility.scriptsDir}/create_interface.py";
+        foreach (var schemaJson in schemaJsons)
+        {
+            Console.WriteLine($"Translating: {schemaJson}");
+            var cmd = $"python {script} {schemaJson}";
+            Console.WriteLine(cmd);
+            //Process.Start($"cmd {cmd}");
+            ExeCommand("cmd", cmd, out var msg);
+        }
+
+    }
 
     //#region Helpers
     ////prepare loader package
@@ -99,7 +141,7 @@ internal class Program
     //    if (string.IsNullOrEmpty(v))
     //        throw new ArgumentException($"Failed to get the version");
 
-    //    var src = System.IO.Path.Combine(workingDir, "installer");
+    //    var src = System.IO.Path.Combine(Utility.workingDir, "installer");
     //    var packageDir = System.IO.Path.Combine(src, "packages", "loader", rhinoVersion);
 
     //    var versionDir = System.IO.Path.Combine(packageDir, v);
@@ -117,7 +159,7 @@ internal class Program
     //// Ladybug installer
     //static void GetLBTInstaller()
     //{
-    //    var dir = System.IO.Path.Combine(workingDir, "installer", "packages", "lbt");
+    //    var dir = System.IO.Path.Combine(Utility.workingDir, "installer", "packages", "lbt");
     //    if (Directory.Exists(dir))
     //        Directory.Delete(dir, true);
 
@@ -132,7 +174,7 @@ internal class Program
 
     //// static void GetPollinationAppPanel()
     //// {
-    ////     var rootDir = System.IO.Path.Combine(workingDir, "installer", "packages", "plugin");
+    ////     var rootDir = System.IO.Path.Combine(Utility.workingDir, "installer", "packages", "plugin");
 
     ////     var dir6 = System.IO.Path.Combine(rootDir, "6.0", "Pollination-panel");
     ////     var dir7 = System.IO.Path.Combine(rootDir, "7.0", "Pollination-panel");

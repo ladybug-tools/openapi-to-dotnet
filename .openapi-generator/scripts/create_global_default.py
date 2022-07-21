@@ -3,6 +3,20 @@ import json
 import re
 import os
 
+ROOT_DIR = os.getcwd()
+GENERATOR_DIR = os.path.join(ROOT_DIR, '.openapi-generator')
+
+print(ROOT_DIR)
+print(GENERATOR_DIR)
+
+def get_package_name():
+    config_file = os.path.join(ROOT_DIR, '.openapi-config.json')
+    with open(config_file, "r") as jsonFile:
+        config_data = json.load(jsonFile)
+
+    package_name = config_data["packageName"]
+    return package_name
+
 
 def replace_global_defaults(source_json, resource_file):
     with open(source_json, "rb") as jsonFile:
@@ -76,8 +90,12 @@ def fix_model_properties(cs_file):
     return data
 
 
-json_file = r'.openapi-docs/model_inheritance.json'
-resource_file = r'src/HoneybeeSchema/Resource.resx'
-src_folder = r'src/HoneybeeSchema/Model'
-replace_global_defaults(json_file, resource_file)
-fix_cs_files(src_folder)
+json_file = os.path.join(ROOT_DIR, '.openapi-docs', 'model_inheritance.json') 
+
+if os.path.exists(json_file):
+    package_name = get_package_name()
+    resource_file = os.path.join(ROOT_DIR, 'src', package_name, 'Resource.resx') 
+    src_folder = os.path.join(ROOT_DIR, 'src', package_name, 'Model') 
+
+    replace_global_defaults(json_file, resource_file)
+    fix_cs_files(src_folder)

@@ -4,9 +4,15 @@ import json
 import urllib.request
 import subprocess 
 
+ROOT_DIR = os.getcwd()
+GENERATOR_DIR = os.path.join(ROOT_DIR, '.openapi-generator')
+
+print(ROOT_DIR)
+print(GENERATOR_DIR)
+
 
 # Check the version from config
-config_file = os.path.join(os.getcwd(), '.openapi-generator', '.openapi-config.json')
+config_file = os.path.join(ROOT_DIR, '.openapi-config.json')
 with open(config_file, "r") as jsonFile:
     config_data = json.load(jsonFile)
 
@@ -45,11 +51,11 @@ print(f'New version: {new_version}')
 
 
 # update the version
-assembly_file = os.path.join(os.getcwd(), 'src', package_name, f'{package_name}.csproj')
-
-with open(assembly_file, encoding='utf-8', mode='r') as csFile:
-    s = csFile.read()
-with open(assembly_file, encoding='utf-8', mode='w') as f:
-    s = re.sub(r"(?<=\SVersion\>)\S+(?=\<\/)", new_version, s)
-    print(f"Update AssemblyVersion to: {new_version}")
-    f.write(s)
+assembly_file = os.path.join(ROOT_DIR, 'src', package_name, f'{package_name}.csproj')
+if os.path.exists(assembly_file):
+    with open(assembly_file, encoding='utf-8', mode='r') as csFile:
+        s = csFile.read()
+    with open(assembly_file, encoding='utf-8', mode='w') as f:
+        s = re.sub(r"(?<=\SVersion\>)\S+(?=\<\/)", new_version, s)
+        print(f"Update AssemblyVersion to: {new_version}")
+        f.write(s)
